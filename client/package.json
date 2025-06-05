@@ -1,6 +1,7 @@
 {
   "name": "client",
   "version": "0.1.0",
+  "proxy": "http://localhost:5000",
   "private": true,
   "dependencies": {
     "@testing-library/dom": "^10.4.0",
@@ -16,6 +17,7 @@
     "react-router-dom": "^7.6.1",
     "react-scripts": "5.0.1",
     "react-scroll": "^1.9.3",
+    "react-toastify": "^11.0.5",
     "web-vitals": "^2.1.4"
   },
   "scripts": {

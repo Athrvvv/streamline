@@ -23,6 +23,7 @@ client/.env.test.local
 client/.env.production.local
 backend/.env
 backend/scripts
+backend/db.js
 
 # ==========================
 # 🧪 Testing

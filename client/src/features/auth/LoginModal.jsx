@@ -1,8 +1,8 @@
 import { IoClose } from "react-icons/io5";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState } from "react";
-import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import api from "../../utils/setupAxios";
 
 export default function LoginModal({ isOpen, onClose }) {
   const [email, setEmail] = useState('');
@@ -19,20 +19,16 @@ export default function LoginModal({ isOpen, onClose }) {
     }
 
     try {
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
+      const res = await api.post("/auth/login", {
         email,
         password,
-        rememberMe
+        rememberMe,
       });
 
       const { token, user } = res.data;
 
-      if (rememberMe) {
-        localStorage.setItem('token', token);
-      } else {
-        sessionStorage.setItem('token', token);
-      }
-
+      const storage = rememberMe ? localStorage : sessionStorage;
+      storage.setItem('token', token);
       localStorage.setItem('user', JSON.stringify(user));
 
       navigate(`/dashboard/${user.id}`);
@@ -57,18 +53,18 @@ export default function LoginModal({ isOpen, onClose }) {
               <IoClose />
             </button>
 
-            {/* Left Panel – Hidden on small screens */}
+            {/* Left Panel */}
             <div className="hidden md:flex w-1/2 bg-gray-100 p-8 flex-col justify-between">
               <div>
                 <h2 className="text-2xl font-semibold mb-4">Welcome!</h2>
                 <div className="text-6xl font-bold">W. <span role="img" aria-label="smile">😊</span></div>
               </div>
               <p className="text-sm">
-                Not a member yet? <span className="underline cursor-pointer">Reserve Access </span>
+                Not a member yet? <span className="underline cursor-pointer">Reserve Access</span>
               </p>
             </div>
 
-            {/* Right Panel – Always visible */}
+            {/* Right Panel */}
             <div className="w-full md:w-1/2 p-8">
               <h2 className="text-xl font-semibold mb-6">Log in</h2>
 

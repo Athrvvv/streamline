@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { jwtDecode } from 'jwt-decode';
 
 import Navbar from "../components/Navbar";
@@ -14,7 +14,19 @@ import SignupModal from "../features/auth/SignupModal";
 export default function LandingPage() {
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+  const [reservedEmail, setReservedEmail] = useState("");
+  const [referralId, setReferralId] = useState(null);
+
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const ref = searchParams.get("ref");
+    if (ref) {
+      setReferralId(ref);
+      localStorage.setItem("referral_code", ref);
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     const token = localStorage.getItem("token") || sessionStorage.getItem("token");
@@ -26,7 +38,7 @@ export default function LandingPage() {
           navigate(`/dashboard/${decoded.id}`);
         }
       } catch (err) {
-        // Token is invalid or corrupt — do nothing
+        // Invalid token — skip redirection
       }
     }
   }, [navigate]);
@@ -39,8 +51,16 @@ export default function LandingPage() {
       <CTASection onReserveClick={() => setShowSignup(true)} />
       <Footer />
       <ScrollToTopButton />
+
       <LoginModal isOpen={showLogin} onClose={() => setShowLogin(false)} />
-      <SignupModal isOpen={showSignup} onClose={() => setShowSignup(false)} />
+
+      <SignupModal
+        isOpen={showSignup}
+        onClose={() => setShowSignup(false)}
+        reservedEmail={reservedEmail}
+        setReservedEmail={setReservedEmail}
+        referralId={referralId}
+      />
     </>
   );
 }
