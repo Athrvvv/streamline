@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { IoClose } from "react-icons/io5";
-import api from "../../utils/setupAxios"; // ✅ Using custom Axios instance
+import api from "../../utils/setupAxios";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 
@@ -14,6 +14,8 @@ export default function SignupModal({
 }) {
   const [step, setStep] = useState(1);
   const [code, setCode] = useState("");
+  const [emailInput, setEmailInput] = useState(""); // used only if no reservedEmail
+  const [manualMode, setManualMode] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     middleName: "",
@@ -41,15 +43,24 @@ export default function SignupModal({
       try {
         await api.post("/auth/reserve-access", { email: reservedEmail });
         setStep(2);
+        setManualMode(false);
       } catch (err) {
         alert(err.response?.data?.message || "Error sending code");
       }
     } else if (step === 2) {
+      const emailToUse = manualMode ? emailInput : reservedEmail;
+      if (!emailToUse || !code) return alert("Email and code are required.");
+
       try {
         await api.post("/auth/verify-access-code", {
-          email: reservedEmail,
+          email: emailToUse,
           code,
         });
+
+        if (manualMode) {
+          setReservedEmail(emailInput);
+        }
+
         setStep(3);
       } catch (err) {
         alert(err.response?.data?.message || "Invalid code.");
@@ -74,16 +85,15 @@ export default function SignupModal({
       });
 
       const { token, user } = res.data;
-
       const storage = formData.rememberMe ? localStorage : sessionStorage;
       storage.setItem("token", token);
       localStorage.setItem("user", JSON.stringify(user));
 
-      // Cleanup
       localStorage.removeItem("referral_code");
       setStep(1);
       setReservedEmail("");
       setCode("");
+      setEmailInput("");
       setFormData({
         firstName: "",
         middleName: "",
@@ -103,7 +113,15 @@ export default function SignupModal({
     }
   };
 
-  const handleBack = () => setStep((prev) => prev - 1);
+  const handleBack = () => {
+    if (manualMode) {
+      setStep(1);
+      setManualMode(false);
+    } else {
+      setStep((prev) => prev - 1);
+    }
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -144,7 +162,13 @@ export default function SignupModal({
               >
                 Reserve access
               </button>
-              <p className="mt-4 text-sm underline cursor-pointer" onClick={() => setStep(2)}>
+              <p
+                className="mt-4 text-sm underline cursor-pointer"
+                onClick={() => {
+                  setStep(2);
+                  setManualMode(true);
+                }}
+              >
                 Already have an access code?
               </p>
             </motion.div>
@@ -161,6 +185,15 @@ export default function SignupModal({
               <h2 className="text-xl font-semibold mb-4">
                 Verification code is sent to your email.
               </h2>
+              {manualMode && (
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  className="w-full bg-gray-800 text-white border border-gray-700 rounded px-4 py-2 mb-4"
+                  value={emailInput}
+                  onChange={(e) => setEmailInput(e.target.value)}
+                />
+              )}
               <input
                 type="text"
                 placeholder="Enter your access code"
