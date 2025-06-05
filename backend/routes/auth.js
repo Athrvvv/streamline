@@ -3,6 +3,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const router = express.Router();
+const connectDB = require("../db");
 const { MongoClient, ObjectId } = require('mongodb');
 const generateAccessCode = require('../utils/generateCode');
 const {sendAccessCode,sendMilestoneEmail} = require('../utils/mailer');
@@ -257,17 +258,20 @@ router.post('/refresh-token', (req, res) => {
   }
 });
 
+// ✅ Get user referral stats (points, referral count)
 router.get("/user/me", verifyToken, async (req, res) => {
-  const db = getDb();
-  const users = db.collection("users");
-
   try {
+    const db = await connectDB();
+    const users = db.collection("users");
+
     const user = await users.findOne(
       { _id: new ObjectId(req.user.id) },
       { projection: { referralCount: 1, points: 1 } }
     );
 
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     res.json(user);
   } catch (err) {
@@ -275,7 +279,6 @@ router.get("/user/me", verifyToken, async (req, res) => {
     res.status(500).json({ message: "Internal Server Error" });
   }
 });
-
 
 
 module.exports = router;
